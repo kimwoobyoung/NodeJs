@@ -40,15 +40,15 @@ app.get('/list', async (req, res) => {
     // console.log(result[0].title);
     // res.send(result[0].title);
     res.render('list.ejs', { posts : result })
-});
+})
 
 app.get('/time', async (req, res) => {
     res.render('time.ejs', { date : new Date() });
-});
+})
 
 app.get('/write', async (req, res) => {
     res.render('write.ejs');
-});
+})
 
 app.post('/add', async (req, res) => {
     if (req.body.title == '') {
@@ -60,10 +60,10 @@ app.post('/add', async (req, res) => {
             res.redirect('list');
         } catch (err) {
             console.log(err)
-            res.send('db에러');
+            // res.send('db에러');
         }
     }
-});
+})
 
 app.get('/detail/:id', async (req, res) => {
     try {
@@ -76,14 +76,31 @@ app.get('/detail/:id', async (req, res) => {
         }
 
     } catch (err) {
-        res.send('예외처리: ', err)
+        // res.send('예외처리: ', err)
     }
     
-});
+})
 
 //수정
 app.get('/edit/:id', async (req, res) => {
-    let result = await db.collection('post').findOne({ __id : new ObjectId(req.params.id)})
-    res.render('edit.ejs')
+    try {
+        let result = await db.collection('post').findOne({ _id: new ObjectId(req.params.id) });
+        res.render('edit.ejs', { result: result });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('서버 에러: 글 수정 페이지 로딩 중 오류 발생');
+    }
 });
 
+app.post('/edit', async (req, res) => {
+    try {
+        await db.collection('post').updateOne(
+            { _id: new ObjectId(req.body.id) },
+            { $set: { title: req.body.title, content: req.body.content } }
+        );
+        res.redirect('/list');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('서버 에러: 글 수정 중 오류 발생');
+    }
+});
